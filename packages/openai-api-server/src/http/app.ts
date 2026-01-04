@@ -189,20 +189,53 @@ async function handleChatCompletions(
 /**
  * Handles GET /v1/models endpoint (returns available models)
  */
-function handleListModels(req: Request, res: Response, context: ServerContext) {
-  const currentModel = context.config.getModel();
+function handleListModels(
+  req: Request,
+  res: Response,
+  _context: ServerContext,
+) {
+  // List of available Gemini models
+  // Note: This is a curated list of publicly available models
+  // Update this list as new models become available
+  const availableModels = [
+    // Gemini 2.0 models
+    'gemini-2.0-flash-exp',
+    'gemini-2.0-flash-thinking-exp-01-21',
+    'gemini-2.0-flash-thinking-exp',
 
-  // Return a simple models list - in a real implementation, this could be more comprehensive
+    // Gemini 2.5 models (if available)
+    'gemini-2.5-flash-lite',
+
+    // Gemini 3.0 models (experimental/preview)
+    'gemini-3-flash-preview',
+
+    // Experimental models
+    'gemini-exp-1206',
+    'gemini-exp-1121',
+    'gemini-exp-1114',
+    'learnlm-1.5-pro-experimental',
+
+    // Gemini 1.5 models (stable)
+    'gemini-1.5-pro',
+    'gemini-1.5-pro-002',
+    'gemini-1.5-pro-latest',
+    'gemini-1.5-flash',
+    'gemini-1.5-flash-002',
+    'gemini-1.5-flash-latest',
+    'gemini-1.5-flash-8b',
+    'gemini-1.5-flash-8b-latest',
+  ];
+
+  const models = availableModels.map((modelId) => ({
+    id: modelId,
+    object: 'model',
+    created: Math.floor(Date.now() / 1000),
+    owned_by: 'google',
+  }));
+
   return res.status(200).json({
     object: 'list',
-    data: [
-      {
-        id: currentModel,
-        object: 'model',
-        created: Math.floor(Date.now() / 1000),
-        owned_by: 'google',
-      },
-    ],
+    data: models,
   });
 }
 
