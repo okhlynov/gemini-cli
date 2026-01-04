@@ -17,7 +17,7 @@ export async function runOpenAIApiMode(
   settings: LoadedSettings,
   port: number,
 ): Promise<void> {
-  debugLogger.info(`Starting OpenAI API server on port ${port}...`);
+  debugLogger.log(`Starting OpenAI API server on port ${port}...`);
 
   // Initialize the config to set up authentication and content generator
   await config.initialize();
@@ -28,7 +28,7 @@ export async function runOpenAIApiMode(
     throw new Error('Failed to initialize content generator');
   }
 
-  debugLogger.info('Content generator initialized successfully');
+  debugLogger.log('Content generator initialized successfully');
 
   // Start the OpenAI API server
   await startServer(config, contentGenerator, port);
