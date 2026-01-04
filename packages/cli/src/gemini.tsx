@@ -84,6 +84,7 @@ import { SessionSelector } from './utils/sessionUtils.js';
 import { computeWindowTitle } from './utils/windowTitle.js';
 import { SettingsContext } from './ui/contexts/SettingsContext.js';
 import { MouseProvider } from './ui/contexts/MouseContext.js';
+import { runOpenAIApiMode } from './openaiApiMode.js';
 
 import { SessionStatsProvider } from './ui/contexts/SessionContext.js';
 import { VimModeProvider } from './ui/contexts/VimModeContext.js';
@@ -587,6 +588,32 @@ export async function main() {
 
     if (config.getExperimentalZedIntegration()) {
       return runZedIntegration(config, settings, argv);
+    }
+
+    // Handle OpenAI API server mode
+    if (argv.openaiApi) {
+      const port = argv.openaiPort ? parseInt(argv.openaiPort, 10) : 8080;
+      if (isNaN(port) || port < 1 || port > 65535) {
+        debugLogger.error(
+          `Invalid port number: ${argv.openaiPort}. Port must be between 1 and 65535.`,
+        );
+        await runExitCleanup();
+        process.exit(ExitCodes.FATAL_INPUT_ERROR);
+      }
+
+      // Authenticate before starting the server
+      const authType = await validateNonInteractiveAuth(
+        settings.merged.security?.auth?.selectedType,
+        settings.merged.security?.auth?.useExternal,
+        config,
+        settings,
+      );
+      await config.refreshAuth(authType);
+
+      debugLogger.log(`Starting OpenAI API server on port ${port}...`);
+      await runOpenAIApiMode(config, settings, port);
+      // The server runs indefinitely, so we won't reach this point unless there's an error
+      return;
     }
 
     let input = config.getQuestion();

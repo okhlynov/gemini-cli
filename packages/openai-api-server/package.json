@@ -1,0 +1,35 @@
+{
+  "name": "@google/gemini-cli-openai-api-server",
+  "version": "0.24.0-nightly.20251227.37be16243",
+  "description": "OpenAI-compatible API server for Gemini CLI",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/google-gemini/gemini-cli.git",
+    "directory": "packages/openai-api-server"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "node ../../scripts/build_package.js",
+    "start": "node dist/src/http/server.js",
+    "lint": "eslint . --ext .ts,.tsx",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@google/gemini-cli-core": "file:../core",
+    "express": "^5.1.0",
+    "uuid": "^13.0.0",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "typescript": "^5.3.3"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

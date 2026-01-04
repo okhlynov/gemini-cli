@@ -77,6 +77,8 @@ export interface CliArgs {
   outputFormat: string | undefined;
   fakeResponses: string | undefined;
   recordResponses: string | undefined;
+  openaiApi: boolean | undefined;
+  openaiPort: string | undefined;
 }
 
 export async function parseArguments(settings: Settings): Promise<CliArgs> {
@@ -240,6 +242,18 @@ export async function parseArguments(settings: Settings): Promise<CliArgs> {
           type: 'string',
           description: 'Path to a file to record model responses for testing.',
           hidden: true,
+        })
+        .option('openai-api', {
+          type: 'boolean',
+          description:
+            'Start OpenAI-compatible API server instead of interactive mode.',
+          default: false,
+        })
+        .option('openai-port', {
+          type: 'string',
+          nargs: 1,
+          description: 'Port for OpenAI API server (default: 8080).',
+          default: '8080',
         })
         .deprecateOption(
           'prompt',
