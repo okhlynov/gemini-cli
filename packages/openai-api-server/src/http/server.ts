@@ -49,31 +49,32 @@ export async function startServer(
       });
     });
 
-    // Graceful shutdown
+    // Aggressive shutdown - don't wait for anything
+    let shuttingDown = false;
     const shutdown = (signal: string) => {
+      if (shuttingDown) return; // Prevent multiple shutdown attempts
+      shuttingDown = true;
+
       logger.info(`[OpenAI API Server] Received ${signal}, shutting down...`);
 
-      // Immediately destroy all active connections (HTTP keep-alive connections)
+      // Immediately destroy all active connections
       connections.forEach((conn) => conn.destroy());
       logger.info(
         `[OpenAI API Server] Closed ${connections.size} active connections`,
       );
 
-      // Stop accepting new connections
-      server.close(() => {
-        logger.info('[OpenAI API Server] Server closed');
+      // Close server (non-blocking)
+      server.close();
+
+      // Force immediate exit - don't wait for anything
+      setImmediate(() => {
+        logger.info('[OpenAI API Server] Server stopped');
         process.exit(0);
       });
-
-      // Fallback: Force exit if server doesn't close within 2 seconds
-      setTimeout(() => {
-        logger.error('[OpenAI API Server] Forced exit after timeout');
-        process.exit(1);
-      }, 2000);
     };
 
-    process.on('SIGTERM', () => shutdown('SIGTERM'));
-    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.once('SIGTERM', () => shutdown('SIGTERM'));
+    process.once('SIGINT', () => shutdown('SIGINT'));
   } catch (error) {
     logger.error('[OpenAI API Server] Failed to start', {
       error: error instanceof Error ? error.message : String(error),
