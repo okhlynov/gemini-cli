@@ -6,6 +6,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { Socket } from 'node:net';
 import { logger } from '../config/logger.js';
 import { createApp } from './app.js';
 import type { Config, ContentGenerator } from '@google/gemini-cli-core';
@@ -39,17 +40,44 @@ export async function startServer(
       logger.info(`[OpenAI API Server] Press Ctrl+C to stop`);
     });
 
+    // Track all connections to force close them on shutdown
+    const connections = new Set<Socket>();
+    server.on('connection', (conn: Socket) => {
+      connections.add(conn);
+      conn.on('close', () => {
+        connections.delete(conn);
+      });
+    });
+
     // Graceful shutdown
-    const shutdown = () => {
-      logger.info('[OpenAI API Server] Shutting down...');
+    const shutdown = (signal: string) => {
+      logger.info(`[OpenAI API Server] Received ${signal}, shutting down...`);
+
+      // Stop accepting new connections
       server.close(() => {
         logger.info('[OpenAI API Server] Server closed');
         process.exit(0);
       });
+
+      // Force close all existing connections after a timeout
+      setTimeout(() => {
+        logger.warn(
+          '[OpenAI API Server] Forcing closure of remaining connections...',
+        );
+        connections.forEach((conn) => conn.destroy());
+
+        // Force exit after another timeout if server still hasn't closed
+        setTimeout(() => {
+          logger.error(
+            '[OpenAI API Server] Forced exit after shutdown timeout',
+          );
+          process.exit(1);
+        }, 1000);
+      }, 5000); // 5 second grace period
     };
 
-    process.on('SIGTERM', shutdown);
-    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
   } catch (error) {
     logger.error('[OpenAI API Server] Failed to start', {
       error: error instanceof Error ? error.message : String(error),
