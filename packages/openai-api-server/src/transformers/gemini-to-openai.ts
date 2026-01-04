@@ -108,6 +108,13 @@ function mapFinishReason(
 }
 
 /**
+ * Strips the 'models/' prefix from model name if present
+ */
+function normalizeModelName(model: string): string {
+  return model.startsWith('models/') ? model.substring(7) : model;
+}
+
+/**
  * Transforms Gemini response to OpenAI Chat Completion response
  */
 export function transformGeminiResponseToOpenAI(
@@ -131,7 +138,7 @@ export function transformGeminiResponseToOpenAI(
     id: requestId,
     object: 'chat.completion',
     created: Math.floor(Date.now() / 1000),
-    model,
+    model: normalizeModelName(model),
     choices: [choice],
   };
 
@@ -181,7 +188,7 @@ export function transformGeminiStreamChunkToOpenAI(
     id: requestId,
     object: 'chat.completion.chunk',
     created: Math.floor(Date.now() / 1000),
-    model,
+    model: normalizeModelName(model),
     choices: [choice],
   };
 }

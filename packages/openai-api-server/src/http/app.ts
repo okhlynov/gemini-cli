@@ -66,7 +66,12 @@ async function handleChatCompletions(
     const geminiRequestBase = transformOpenAIRequestToGemini(openaiRequest);
 
     // Get the model name (use from request or default from config)
-    const model = openaiRequest.model || context.config.getModel();
+    const modelName = openaiRequest.model || context.config.getModel();
+
+    // Gemini API requires model names to be prefixed with 'models/'
+    const model = modelName.startsWith('models/')
+      ? modelName
+      : `models/${modelName}`;
 
     // Add model to the request
     const geminiRequest = {
