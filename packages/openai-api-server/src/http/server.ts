@@ -53,27 +53,23 @@ export async function startServer(
     const shutdown = (signal: string) => {
       logger.info(`[OpenAI API Server] Received ${signal}, shutting down...`);
 
+      // Immediately destroy all active connections (HTTP keep-alive connections)
+      connections.forEach((conn) => conn.destroy());
+      logger.info(
+        `[OpenAI API Server] Closed ${connections.size} active connections`,
+      );
+
       // Stop accepting new connections
       server.close(() => {
         logger.info('[OpenAI API Server] Server closed');
         process.exit(0);
       });
 
-      // Force close all existing connections after a timeout
+      // Fallback: Force exit if server doesn't close within 2 seconds
       setTimeout(() => {
-        logger.warn(
-          '[OpenAI API Server] Forcing closure of remaining connections...',
-        );
-        connections.forEach((conn) => conn.destroy());
-
-        // Force exit after another timeout if server still hasn't closed
-        setTimeout(() => {
-          logger.error(
-            '[OpenAI API Server] Forced exit after shutdown timeout',
-          );
-          process.exit(1);
-        }, 1000);
-      }, 5000); // 5 second grace period
+        logger.error('[OpenAI API Server] Forced exit after timeout');
+        process.exit(1);
+      }, 2000);
     };
 
     process.on('SIGTERM', () => shutdown('SIGTERM'));
